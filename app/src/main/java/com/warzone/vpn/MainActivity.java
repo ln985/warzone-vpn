@@ -27,14 +27,11 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int VPN_REQUEST_CODE = 1001;
 
-    private Spinner spinnerProvince;
-    private Spinner spinnerCity;
-    private Spinner spinnerDistrict;
+    private Spinner spinnerProvince, spinnerCity, spinnerDistrict;
     private Button btnStartVpn;
-    private TextView tvStatus;
+    private TextView tvStatus, tvTrafficInfo;
 
     private JSONArray provinceData;
-
     private List<JSONObject> provinceList = new ArrayList<>();
     private List<JSONObject> cityList = new ArrayList<>();
     private List<JSONObject> districtList = new ArrayList<>();
@@ -43,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
     private String selectedCity = "";
     private String selectedDistrict = "";
     private String selectedAdcode = "";
+    private String selectedFullName = "";
 
     private boolean isConnected = false;
 
@@ -56,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
         spinnerDistrict = findViewById(R.id.spinner_district);
         btnStartVpn = findViewById(R.id.btn_start_vpn);
         tvStatus = findViewById(R.id.tv_status);
+        tvTrafficInfo = findViewById(R.id.tv_traffic_info);
 
         try {
             provinceData = loadJsonFromAssets("warzone.json");
@@ -71,6 +70,16 @@ public class MainActivity extends AppCompatActivity {
                 prepareAndConnect();
             }
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // 监听 VPN 服务状态
+        if (LocalVpnService.isRunning) {
+            isConnected = true;
+            updateButtonState();
+        }
     }
 
     private JSONArray loadJsonFromAssets(String filename) throws Exception {
@@ -100,20 +109,15 @@ public class MainActivity extends AppCompatActivity {
         spinnerProvince.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (position == 0) {
-                    clearCityAndDistrict();
-                    return;
-                }
+                if (position == 0) { clearCityAndDistrict(); return; }
                 try {
                     JSONObject province = provinceList.get(position - 1);
                     selectedProvince = province.getString("fullName");
                     selectedAdcode = province.getString("adcode");
+                    selectedFullName = selectedProvince;
                     initCitySpinner(province);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                } catch (Exception e) { e.printStackTrace(); }
             }
-
             @Override
             public void onNothingSelected(AdapterView<?> parent) {}
         });
@@ -127,7 +131,6 @@ public class MainActivity extends AppCompatActivity {
 
         JSONArray cities = province.optJSONArray("list");
         if (cities == null || cities.length() == 0) {
-            // 省直辖，无城市列表，直接跳过
             spinnerCity.setEnabled(false);
             spinnerDistrict.setEnabled(false);
             return;
@@ -148,30 +151,24 @@ public class MainActivity extends AppCompatActivity {
         // 重置区县
         List<String> emptyDistrict = new ArrayList<>();
         emptyDistrict.add("-- 请选择区县 --");
-        ArrayAdapter<String> districtAdapter = new ArrayAdapter<>(this,
+        ArrayAdapter<String> dAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_item, emptyDistrict);
-        districtAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerDistrict.setAdapter(districtAdapter);
+        dAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerDistrict.setAdapter(dAdapter);
         spinnerDistrict.setEnabled(false);
 
         spinnerCity.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (position == 0) {
-                    selectedCity = "";
-                    selectedDistrict = "";
-                    return;
-                }
+                if (position == 0) { selectedCity = ""; selectedDistrict = ""; return; }
                 try {
                     JSONObject city = cityList.get(position - 1);
                     selectedCity = city.getString("fullName");
                     selectedAdcode = city.getString("adcode");
+                    selectedFullName = selectedProvince + " " + selectedCity;
                     initDistrictSpinner(city);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                } catch (Exception e) { e.printStackTrace(); }
             }
-
             @Override
             public void onNothingSelected(AdapterView<?> parent) {}
         });
@@ -184,7 +181,6 @@ public class MainActivity extends AppCompatActivity {
 
         JSONArray districts = city.optJSONArray("list");
         if (districts == null || districts.length() == 0) {
-            // 无区县，自动跳过区县选择
             spinnerDistrict.setEnabled(false);
             selectedDistrict = "";
             return;
@@ -205,30 +201,21 @@ public class MainActivity extends AppCompatActivity {
         spinnerDistrict.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (position == 0) {
-                    selectedDistrict = "";
-                    return;
-                }
+                if (position == 0) { selectedDistrict = ""; return; }
                 try {
                     JSONObject district = districtList.get(position - 1);
                     selectedDistrict = district.getString("fullName");
                     selectedAdcode = district.getString("adcode");
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                    selectedFullName = selectedProvince + " " + selectedCity + " " + selectedDistrict;
+                } catch (Exception e) { e.printStackTrace(); }
             }
-
             @Override
             public void onNothingSelected(AdapterView<?> parent) {}
         });
     }
 
     private void clearCityAndDistrict() {
-        selectedProvince = "";
-        selectedCity = "";
-        selectedDistrict = "";
-        selectedAdcode = "";
-
+        selectedProvince = ""; selectedCity = ""; selectedDistrict = ""; selectedAdcode = ""; selectedFullName = "";
         List<String> empty = new ArrayList<>();
         empty.add("-- 请选择城市 --");
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
@@ -271,31 +258,38 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void connectVpn() {
-        Intent intent = new Intent(this, WarzoneVpnService.class);
+        Intent intent = new Intent(this, LocalVpnService.class);
         intent.putExtra("province", selectedProvince);
         intent.putExtra("city", selectedCity);
         intent.putExtra("district", selectedDistrict);
         intent.putExtra("adcode", selectedAdcode);
+        intent.putExtra("fullName", selectedFullName);
         startService(intent);
 
         isConnected = true;
-        btnStartVpn.setText("断开连接");
-        btnStartVpn.setBackgroundColor(getResources().getColor(android.R.color.holo_red_dark));
-
-        String region = selectedProvince;
-        if (!selectedCity.isEmpty()) region += " > " + selectedCity;
-        if (!selectedDistrict.isEmpty()) region += " > " + selectedDistrict;
-        tvStatus.setText("已连接: " + region + "\n区划代码: " + selectedAdcode);
+        updateButtonState();
+        tvStatus.setText("已连接: " + selectedFullName + "\n区划代码: " + selectedAdcode);
+        tvTrafficInfo.setText("代理端口: 8080\n流量劫持已开启");
     }
 
     private void disconnectVpn() {
-        Intent intent = new Intent(this, WarzoneVpnService.class);
+        Intent intent = new Intent(this, LocalVpnService.class);
         intent.putExtra("action", "disconnect");
         startService(intent);
 
         isConnected = false;
-        btnStartVpn.setText("开始修改");
-        btnStartVpn.setBackgroundColor(getResources().getColor(android.R.color.holo_green_dark));
+        updateButtonState();
         tvStatus.setText("未连接");
+        tvTrafficInfo.setText("");
+    }
+
+    private void updateButtonState() {
+        if (isConnected) {
+            btnStartVpn.setText("断开连接");
+            btnStartVpn.setBackgroundColor(0xFFFF5722); // red-orange
+        } else {
+            btnStartVpn.setText("开始修改");
+            btnStartVpn.setBackgroundColor(0xFF4CAF50); // green
+        }
     }
 }

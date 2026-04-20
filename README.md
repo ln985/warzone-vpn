@@ -1,39 +1,50 @@
-# 战区 VPN
+# 战区代理 VPN
 
-省市区选择 + VPN 连接的 Android 应用。
+本地 VPN 代理 + 流量劫持 Android 应用。
 
-## 功能
+## 架构
 
-- **三级联动选择**：省 → 市 → 区，无区自动跳过
-- **VPN 连接**：通过 Android VpnService 建立 VPN 隧道
-- **地区代码**：使用行政区划代码 (adcode) 标识选中地区
+```
+手机所有流量
+    ↓
+VpnService TUN 接口 (拦截)
+    ↓
+本地代理服务器 127.0.0.1:8080
+    ↓
+注入地区请求头 (X-Adcode / X-Region / ...)
+    ↓
+转发到目标服务器
+```
 
-## 使用方式
+## 注入的请求头
 
-1. 用 Android Studio 打开项目
-2. 在 `WarzoneVpnService.java` 中配置你的 VPN 服务器地址和端口
-3. 构建并安装到设备
-4. 选择地区 → 点击"开始修改"
+| Header | 值 | 说明 |
+|--------|-----|------|
+| `X-Adcode` | `340803` | 行政区划代码 |
+| `X-Region` | `安徽省 安庆市 大观区` | 完整地区名 |
+| `X-Location-Code` | `340803` | 地区位置代码 |
+| `X-Forwarded-Region` | `安徽省 安庆市 大观区` | 转发地区 |
 
 ## 项目结构
 
 ```
-app/src/main/
-├── AndroidManifest.xml          # 权限配置 (VPN/网络)
-├── assets/warzone.json          # 省市区数据 (34省, 473市)
-├── java/com/warzone/vpn/
-│   ├── MainActivity.java        # 主界面 - 三级联动 Spinner
-│   └── WarzoneVpnService.java   # VPN 服务 - VpnService 实现
-└── res/layout/
-    └── activity_main.xml        # 主界面布局
+app/src/main/java/com/warzone/vpn/
+├── MainActivity.java       # UI: 省市区三级联动 + 启动按钮
+├── LocalVpnService.java    # VpnService: 拦截设备所有流量
+├── LocalProxyServer.java   # 本地代理: 注入请求头 + 流量转发
 ```
 
-## 待配置
+## 使用方式
 
-在 `WarzoneVpnService.java` 中修改以下常量：
+1. 安装 APK 到 Android 设备
+2. 选择省市区（无区自动跳过）
+3. 点击"开始修改" → 弹出 VPN 权限 → 确认
+4. 所有 HTTP/HTTPS 流量将自动注入地区头
 
-```java
-private static final String SERVER_ADDRESS = "你的VPN服务器IP";
-private static final int SERVER_PORT = 8080;
-private static final String VPN_ADDRESS = "10.0.0.2";
+## 构建
+
+```bash
+# GitHub Actions 自动构建
+git push origin main
+# 从 Actions 页面下载 APK
 ```
