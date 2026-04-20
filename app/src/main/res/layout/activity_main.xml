@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:gravity="center_horizontal"
+    android:background="#F5F5F5">
+
+    <!-- 标题 -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="战区 VPN"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:textColor="#1A1A1A"
+        android:layout_marginTop="40dp"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="选择地区后点击开始修改"
+        android:textSize="14sp"
+        android:textColor="#888888"
+        android:layout_marginBottom="32dp" />
+
+    <!-- 省份选择 -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="省份 / 直辖市"
+        android:textSize="13sp"
+        android:textColor="#666666"
+        android:layout_marginBottom="4dp" />
+
+    <Spinner
+        android:id="@+id/spinner_province"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginBottom="16dp"
+        android:background="@android:drawable/btn_dropdown"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp" />
+
+    <!-- 城市选择 -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="城市"
+        android:textSize="13sp"
+        android:textColor="#666666"
+        android:layout_marginBottom="4dp" />
+
+    <Spinner
+        android:id="@+id/spinner_city"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginBottom="16dp"
+        android:background="@android:drawable/btn_dropdown"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:enabled="false" />
+
+    <!-- 区县选择 -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="区县"
+        android:textSize="13sp"
+        android:textColor="#666666"
+        android:layout_marginBottom="4dp" />
+
+    <Spinner
+        android:id="@+id/spinner_district"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginBottom="24dp"
+        android:background="@android:drawable/btn_dropdown"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:enabled="false" />
+
+    <!-- 状态显示 -->
+    <TextView
+        android:id="@+id/tv_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="未连接"
+        android:textSize="15sp"
+        android:textColor="#888888"
+        android:gravity="center"
+        android:padding="12dp"
+        android:background="@android:color/white"
+        android:layout_marginBottom="24dp" />
+
+    <!-- 开始/断开按钮 -->
+    <Button
+        android:id="@+id/btn_start_vpn"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:text="开始修改"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#4CAF50"
+        android:layout_marginBottom="16dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="⚠️ 请确保已配置VPN服务器地址"
+        android:textSize="12sp"
+        android:textColor="#FF9800" />
+
+</LinearLayout>
