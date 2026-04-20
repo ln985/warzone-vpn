@@ -28,7 +28,6 @@ public class TcpForwarder {
     public void start() throws IOException {
         selector = Selector.open();
         running = true;
-        new Thread(this::selectLoop, "TcpForwarder").start();
     }
 
     public void stop() {
